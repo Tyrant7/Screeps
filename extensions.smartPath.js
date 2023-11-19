@@ -15,6 +15,10 @@ IMMOVABLE = 255;
 CREEP_PATH_ACTIVE = "active";
 CREEP_PATH_STATIC = "static";
 
+// Generate cost matrix
+
+
+
 function generateCostMatrix(room) {
 
     // Clear the existing cached matrix for this room, if one exists
@@ -49,7 +53,7 @@ function generateCostMatrix(room) {
 }
 
 // Returns a cached cost matrix if one exists, otherwise generates one
-function getCachedCostMatrix(roomName) {
+function getCostMatrix(roomName) {
     if (cachedCostMatrices[roomName]) {
         return cachedCostMatrices[roomName];
     }
@@ -65,7 +69,7 @@ function getSmartPath(start, goals) {
         plainCost: 2,
         swampCost: 10,
 
-        roomCallback: getCachedCostMatrix(roomName)
+        roomCallback: getCostMatrix(roomName)
     });
 
     // Convert our list of positions into directions, and store our initial direction

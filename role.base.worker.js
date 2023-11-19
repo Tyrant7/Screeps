@@ -39,13 +39,16 @@ var baseWorker = {
         }
 
         // Then go to default collecting behaviour
-        // Start with tombstones
-        const tombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, { 
-            filter: function(s) {
-                return s.store[RESOURCE_ENERGY] > 50;
-        }});
-        if (creep.withdraw(tombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(tombstone, { visualizePathStyle: {stroke: "ffaa00"}});
+
+        // Start with tombstones, if no enemies nearby
+        if (allianceManager.hostilesPresent(creep.room)) {
+            const tombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, { 
+                filter: function(s) {
+                    return s.store[RESOURCE_ENERGY] > 50;
+            }});
+            if (creep.withdraw(tombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(tombstone, { visualizePathStyle: {stroke: "ffaa00"}});
+            }
         }
 
         // Then containers

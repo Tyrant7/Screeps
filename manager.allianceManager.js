@@ -11,6 +11,13 @@ class AllianceManager {
             return !ALLIES.includes(creep.owner.username);
         }});
     }
+
+    // 
+    hostilesPresent(room) {
+        return room.controller.pos.findClosestByRange(FIND_HOSTILE_CREEPS, { filter: function(creep) {
+            return !ALLIES.includes(creep.owner.username);
+        }}) != null;
+    }
     
     // Find allied creeps in this room
     findAlliedCreeps(room) {
