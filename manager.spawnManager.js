@@ -7,7 +7,7 @@ const archetypes = {
         const workerParts = [WORK, CARRY, MOVE];
         let body = workerParts;
         let lvl = 1;
-        const levelCost = this.getCreepCost(body);
+        const levelCost = getCreepCost(body);
         // If we've been wiped out, cap our worker level and number of workers to ensure we can spawn one
         while (lvl < room.controller.level && lvl < workers.length && (lvl + 1) * levelCost <= room.energyCapacityAvailable) {
             lvl++;
@@ -137,18 +137,24 @@ class SpawnManager {
         }
     }
     
-    // Returns the ID of the first unclaimed source in the room
+    // Returns the ID of the source with the miner closest to death
     findUnusedSourceID(room) {
-        const sources = room.find(FIND_SOURCES, { filter: function(source) {
-            for (const i in miners) {
-                if (miners[i].memory.sourceID === source.id) {
-                    return false;
+        const sources = room.find(FIND_SOURCES);
+
+        let lowestSource = null;
+        let lowestTicks = CREEP_LIFE_TIME + 1;
+        for (let source of sources) {
+            for (let miner of miners) {
+                if (miner.memory.sourceID === source.id &&
+                    miner.ticksToLive < lowestTicks) {
+                    lowestSource = source;
+                    lowestTicks = miner.ticksToLive;
                 }
             }
-            return true;
-        }});
-        if (sources.length > 0) {
-            return sources[0].id;
+        }
+
+        if (lowestSource != null) {
+            return lowestSource.id;
         }
         console.log("Source requested but no source available.");
         return "";
