@@ -15,7 +15,10 @@ IMMOVABLE = 255;
 CREEP_PATH_ACTIVE = "active";
 CREEP_PATH_STATIC = "static";
 
-// Generate cost matrix
+// Generate cost matrix once per room, and only regenerate when one of the following occurs:
+// When a static creep moves
+// When a structure is built
+// When a structure is destroyed
 
 
 

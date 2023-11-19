@@ -14,15 +14,7 @@ var baseWorker = {
     
     // Simply takes energy from containers if available, otherwise mines energy itself
     collectResources: function(creep) {
-        // Start by searching for dropped energy
-        const droppedLoot = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: RESOURCE_ENERGY });
-        if (droppedLoot) {
-            if (creep.pickup(droppedLoot, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(droppedLoot, {visualizePathStyle: {stroke: "#ffaa00"}});
-            }
-            return;
-        }
-        
+
         function searchEnergy(structureType) {
             const nearContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, { 
                 filter: function(s) {
@@ -38,10 +30,17 @@ var baseWorker = {
             return false;
         }
 
-        // Then go to default collecting behaviour
+        // Start by searching for dropped energy, if no enemies present
+        if (!allianceManager.hostilesPresent(creep.room)) {
+            const droppedLoot = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: RESOURCE_ENERGY });
+            if (droppedLoot) {
+                if (creep.pickup(droppedLoot, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(droppedLoot, {visualizePathStyle: {stroke: "#ffaa00"}});
+                }
+                return;
+            }
 
-        // Start with tombstones, if no enemies nearby
-        if (allianceManager.hostilesPresent(creep.room)) {
+            // Then tombstones
             const tombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, { 
                 filter: function(s) {
                     return s.store[RESOURCE_ENERGY] > 50;
@@ -50,7 +49,7 @@ var baseWorker = {
                 creep.moveTo(tombstone, { visualizePathStyle: {stroke: "ffaa00"}});
             }
         }
-
+        
         // Then containers
         if (searchEnergy(STRUCTURE_CONTAINER)) {
             return;
