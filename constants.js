@@ -9,5 +9,10 @@ module.exports = {
     },
     signText: "Testing, testing... 1, 2, 3!",
     roomOverride: "W52S29",
-    workerReevaluateInterval: 375
+    workerReevaluateInterval: 375,
+    pathStatus: {
+        static: "static",
+        active: "active",
+        passive: "passive"
+    },
 };

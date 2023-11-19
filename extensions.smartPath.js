@@ -12,14 +12,60 @@ ROAD_COST = 1;
 
 IMMOVABLE = 255;
 
-CREEP_PATH_ACTIVE = "active";
-CREEP_PATH_STATIC = "static";
-
-// Generate cost matrix once per room, and only regenerate when one of the following occurs:
+// Generate cost matrix once per room; regenerate when one of the following occurs:
 // When a static creep moves
+// When a static creep dies
 // When a structure is built
 // When a structure is destroyed
 
+function invertDirection(direction) {
+    const newDir = direction - 4;
+    return newDir < 1 ? newDir + 8 : newDir;
+}
+
+Creep.prototype.requestSwap = function (target) {
+    const swapDir = this.getDirectionTo(target);
+    this.move(swapDir);
+
+    // Make sure to add this step back to the path of the creep so it doesn't offset the path
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.active &&
+        this.memory.smartPath) {
+        this.smartPath.push(invertDirection(swapDir));
+    }
+}
+
+// Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
+Creep.prototype.getSmartPath = function(FIND, customFilter, range = 1) { 
+    const targets = _.map(this.room.find(FIND, { filter: customFilter }), function(find) {
+        return { pos: find.pos, range: range };
+    });
+    this.memory.smartPath = getSmartPath(this.pos, targets);
+}
+
+// Generates a smart path to a given target
+Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
+    this.memory.smartPath = getSmartPath(this.pos, { pos: target.pos, range: range });
+}
+
+// Follows a generated smart path
+Creep.prototype.followSmartPath = function() {
+    if (!this.memory.smartPath) {
+        return -1;
+    }
+
+    // All creeps are active while moving
+    this.memory.pathStatus = CONSTANTS.pathStatus.active;
+
+    if (this.move(this.memory.smartPath[0]) === OK) {
+        this.memory.smartPath.shift();
+
+        // If we have no more items left in our path, we are now passive, unless static
+        if (this.memory.smartPath.length == 0 &&
+            this.memory.pathStatus === CONSTANTS.pathStatus.active) {
+            this.memory.pathStatus = CONSTANTS.pathStatus.passive;
+        }
+    }
+}
 
 
 function generateCostMatrix(room) {
@@ -36,17 +82,17 @@ function generateCostMatrix(room) {
         if (structure.structureType === STRUCTURE_ROAD) {
             matrix.set(structure.pos.x, structure.pos.y, ROAD_COST)
         }
-        else if (structure.structureType !== STRUCTURE_RAMPART && 
-                 structure.structureType !== STRUCTURE_CONTAINER) {
+        else if (structure.structureType !== STRUCTURE_RAMPART &&
+            structure.structureType !== STRUCTURE_CONTAINER) {
             matrix.set(structure.pos.x, structure.pos.y, IMMOVABLE);
         }
     }
 
     // Add immovable tiles where static creeps appear
-    const creeps = room.find(FIND_CREEPS);
+    const creeps = room.find(FIND_MY_CREEPS);
     for (let creep of creeps) {
-        if (creep.memory.pathStatus === CREEP_PATH_STATIC) {
-            matrix.set(creep.pos.x, cree.pos.y, IMMOVABLE);
+        if (creep.memory.pathStatus === CONSTANTS.pathStatus.static) {
+            matrix.set(creep.pos.x, creep.pos.y, IMMOVABLE);
         }
     }
 
@@ -54,6 +100,7 @@ function generateCostMatrix(room) {
     cachedCostMatrices[room.name] = matrix;
     return matrix;
 }
+
 
 // Returns a cached cost matrix if one exists, otherwise generates one
 function getCostMatrix(roomName) {
@@ -63,11 +110,12 @@ function getCostMatrix(roomName) {
     return generateCostMatrix(Game.rooms[roomName]);
 }
 
+
 // Returns an array of directions from start (RoomPosition) to the closest goal (RoomPosition)
 function getSmartPath(start, goals) {
 
     // This will get us our path as a list of RoomPositions
-    let path = PathFinder.search( start, goals, {
+    let path = PathFinder.search(start, goals, {
         // Default costs for walkable terrain
         plainCost: 2,
         swampCost: 10,
@@ -81,12 +129,9 @@ function getSmartPath(start, goals) {
 
     // Path directions from first point to the last, excluding the last since it has nowhere to go
     for (let i = 0; i < path.length - 2; i++) {
-        directions.push(path[i].getDirectionTo(path[i+1]));
+        directions.push(path[i].getDirectionTo(path[i + 1]));
     }
     return directions;
 }
 
-Creep.prototype.requestSwap = function(target) {
-    const swapDir = this.getDirectionTo(target);
-    this.move(swapDir);
-}
+module.exports = generateCostMatrix;

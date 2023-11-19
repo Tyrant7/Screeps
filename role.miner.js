@@ -24,6 +24,10 @@ var roleMiner = {
             if (creep.harvest(assignedSource) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(assignedSource, { visualizePathStyle: { stroke: "#11aabb" }});
             }
+            else {
+                // We've hit our target; hunker down as static
+                creep.memory.pathStatus = CONSTANTS.pathStatus.static;
+            }
         }
     }
 };
