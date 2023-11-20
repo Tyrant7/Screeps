@@ -138,6 +138,7 @@ class SpawnManager {
     }
     
     // Returns the ID of the source with the miner closest to death
+    // MIGHT need a rework to be more elegant/accurate
     findUnusedSourceID(room) {
         const sources = room.find(FIND_SOURCES);
 
@@ -149,8 +150,11 @@ class SpawnManager {
                     miner.ticksToLive < lowestTicks) {
                     lowestSource = source;
                     lowestTicks = miner.ticksToLive;
+                    continue;
                 }
             }
+            // No miners have this source, its free
+            return source.id;
         }
 
         if (lowestSource != null) {
