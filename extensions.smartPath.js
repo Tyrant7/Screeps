@@ -18,6 +18,12 @@ IMMOVABLE = 255;
 // When a structure is built
 // When a structure is destroyed
 
+// Use regex to filter out relevant events from the getEventLog property of the room
+// -> build events where a construction site was placed or road was completed
+// -> destroy events for structure
+// -> death events for creeps where the creep was static
+// -> when a creep's status is set to static
+
 function invertDirection(direction) {
     const newDir = direction - 4;
     return newDir < 1 ? newDir + 8 : newDir;

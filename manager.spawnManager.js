@@ -143,20 +143,18 @@ class SpawnManager {
 
         let lifeTimes = [];
         for (let source of sources) {
-            const miner = miners.find((miner) => miner.memory.sourceID === source.id);
-            if (miner) {
-                // If another miner already has this source, go with the highest time to live
-                if (lifeTimes[source.id]) {
-                    lifeTimes[source.id] = Math.max(lifeTimes[source.id], miner.ticksToLive);
-                }
-                else {
-                    lifeTimes[source.id] = miner.ticksToLive;
-                }
-                continue;
-            }
+
+            // Find all miners on this source
+            const sourceMiners = miners.filter((miner) => miner.memory.sourceID === source.id);
 
             // This source is free, we can return it
-            return source.id;
+            if (sourceMiners.length == 0) {
+                return source.id;
+            }
+
+            // Get the highest time to live for this source
+            const maxLife = sourceMiners.reduce((prev, curr) => prev.ticksToLive > curr.ticksToLive ? prev : curr);
+            lifeTimes.push({ sourceID: source.id, life: maxLife });
         }
 
         if (lifeTimes.length == 0) {
@@ -164,7 +162,8 @@ class SpawnManager {
             return "";
         }
 
-        return lifeTimes.sort()[0];
+        const minLife = Math.min(...lifeTimes.map(item => item.life));
+        return minLife.sourceID;
     }
 }
 
