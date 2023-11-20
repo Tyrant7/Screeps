@@ -138,30 +138,33 @@ class SpawnManager {
     }
     
     // Returns the ID of the source with the miner closest to death
-    // MIGHT need a rework to be more elegant/accurate
     findUnusedSourceID(room) {
         const sources = room.find(FIND_SOURCES);
 
-        let lowestSource = null;
-        let lowestTicks = CREEP_LIFE_TIME + 1;
+        let lifeTimes = [];
         for (let source of sources) {
-            for (let miner of miners) {
-                if (miner.memory.sourceID === source.id &&
-                    miner.ticksToLive < lowestTicks) {
-                    lowestSource = source;
-                    lowestTicks = miner.ticksToLive;
-                    continue;
+            const miner = miners.find((miner) => miner.memory.sourceID === source.id);
+            if (miner) {
+                // If another miner already has this source, go with the highest time to live
+                if (lifeTimes[source.id]) {
+                    lifeTimes[source.id] = Math.max(lifeTimes[source.id], miner.ticksToLive);
                 }
+                else {
+                    lifeTimes[source.id] = miner.ticksToLive;
+                }
+                continue;
             }
-            // No miners have this source, its free
+
+            // This source is free, we can return it
             return source.id;
         }
 
-        if (lowestSource != null) {
-            return lowestSource.id;
+        if (lifeTimes.length == 0) {
+            console.log("Source requested but no sources found.");
+            return "";
         }
-        console.log("Source requested but no source available.");
-        return "";
+
+        return lifeTimes.sort()[0];
     }
 }
 
