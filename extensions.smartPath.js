@@ -63,16 +63,17 @@ Creep.prototype.getSmartPath = function(FIND, customFilter, range = 1) {
         return { pos: find.pos, range: range };
     });
     const smartPath = getSmartPath(this.pos, targets);
-    this.memory.smartPath = { path: smartPath.path, target: smartPath.target };
+    this.memory.smartPath = smartPath;
 }
 
 // Generates a smart path to a given target
 Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
     const smartPath = getSmartPath(this.pos, { pos: target.pos, range: range });
-    this.memory.smartPath = { path: smartPath.path, target: smartPath.target };
+    this.memory.smartPath = smartPath;
 }
 
 // Follows a generated smart path
+// Returns -1 if no smart path exists
 Creep.prototype.followSmartPath = function() {
     if (!this.memory.smartPath) {
         return -1;
@@ -101,7 +102,7 @@ Creep.prototype.followSmartPath = function() {
 
 Creep.prototype.smartMoveTo = function(target) {
     const smartPath = this.memory.smartPath;
-    if (!smartPath || smartPath.path.length == 0 || smartPath.target != target) {
+    if (!smartPath || smartPath.path.length == 0 || !smartPath.target.inRangeTo(target, 1)) {
         getSmartPathToTarget(target);
     }
     this.followSmartPath();
@@ -124,6 +125,7 @@ RoomPosition.prototype.getPosInDir = function(dir) {
     // TODO: Fix jank asf code here
     return new RoomPosition(x, y, x > 0 && y > 0 ? this.roomName : Game.map.describeExits(this.roomName)[dir] || this.roomName);
 }
+
 
 // Generates a new cost matrix for the specified room and caches it
 function generateCostMatrix(room) {
@@ -169,6 +171,8 @@ function getCostMatrix(roomName) {
 
 
 // Returns an array of directions from start (RoomPosition) to the closest goal (RoomPosition)
+// In the form
+// { path: DIRECTION constants, targetChosen: RoomPositon }
 function getSmartPath(start, goals) {
 
     // This will get us our path as a list of RoomPositions
