@@ -73,6 +73,21 @@ Creep.prototype.followSmartPath = function() {
     }
 }
 
+// Sets a path status for this creep, and flags regeneration of the cost matrix for its room
+// if this creep is or was static
+Creep.prototype.setPathStatus = function(pathStatus) {
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.static ||
+        pathStatus === CONSTANTS.pathStatus.static) {
+        logRegeneration(this.room);
+    }
+    this.memory.pathStatus = pathStatus;
+}
+
+// Logs a room to regenerate the cost matrix for at the end of the tick
+function logRegeneration(room) {
+    return;
+}
+
 
 function generateCostMatrix(room) {
 

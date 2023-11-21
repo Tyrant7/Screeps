@@ -137,7 +137,8 @@ class SpawnManager {
         }
     }
     
-    // Returns the ID of the source with the miner closest to death
+    // Returns the ID of the source with the miner closest to death. 
+    // If multiple are allocated to one source it will treat it as the highest health miner
     findUnusedSourceID(room) {
         const sources = room.find(FIND_SOURCES);
 
@@ -163,7 +164,8 @@ class SpawnManager {
         }
 
         const minLife = Math.min(...lifeTimes.map(item => item.life));
-        return minLife.sourceID;
+        const minSourceID = lifeTimes.find((lifeTime) => lifeTimes.life === minLife).sourceID;
+        return minSourceID;
     }
 }
 
