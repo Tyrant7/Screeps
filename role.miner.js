@@ -26,7 +26,7 @@ var roleMiner = {
             }
             else {
                 // We've hit our target; hunker down as static
-                creep.memory.pathStatus = CONSTANTS.pathStatus.static;
+                creep.setPathStatus(CONSTANTS.pathStatus.static);
             }
         }
     }
