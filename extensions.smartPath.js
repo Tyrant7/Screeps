@@ -79,6 +79,8 @@ Creep.prototype.followSmartPath = function() {
         return -1;
     }
 
+    console.log("sadasda");
+
     // All creeps are active while moving
     this.setPathStatus(CONSTANTS.pathStatus.active);
   
@@ -86,8 +88,10 @@ Creep.prototype.followSmartPath = function() {
     if (this.move(nextStep) === OK) {
         this.memory.smartPath.path.shift();
 
+        console.log(nextStep);
+
         // Swap with any blockers, as long as they aren't static
-        const blocker = getPosInDir(nextStep).lookFor(LOOK_CREEPS)[0];
+        const blocker = this.pos.getPosInDir(nextStep).lookFor(LOOK_CREEPS)[0];
         if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
             blocker.requestSwap(nextStep);
         }
@@ -101,9 +105,20 @@ Creep.prototype.followSmartPath = function() {
 }
 
 Creep.prototype.smartMoveTo = function(target) {
+
+    if (!target) {
+        return;
+    }
+
+    // Make sure this is the position of the target
+    if (target.pos) {
+        target = target.pos;
+    }
+
     const smartPath = this.memory.smartPath;
-    if (!smartPath || smartPath.path.length == 0 || !smartPath.target.inRangeTo(target, 1)) {
-        getSmartPathToTarget(target);
+    if (!smartPath || smartPath.path.length == 0 || 
+        !smartPath.target || !smartPath.target.inRangeTo(target, 1)) {
+        this.getSmartPathToTarget(target);
     }
     this.followSmartPath();
 }
@@ -119,6 +134,7 @@ Creep.prototype.setPathStatus = function(pathStatus) {
 // Wraps around to neighbouring rooms
 RoomPosition.prototype.getPosInDir = function(dir) {
 
+    console.log(directions[dir]);
     let x = properModulus(this.x + directions[dir].x, ROOM_WIDTH);
     let y = properModulus(this.y + directions[dir].y, ROOM_HEIGHT);
 
@@ -158,15 +174,34 @@ function generateCostMatrix(room) {
 
     // Add this matrix to the cache
     cachedCostMatrices[room.name] = { matrix: matrix, tick: Game.time };
+
+    console.log("Fire");
+    console.log(cachedCostMatrices[room.name]);
+
+    return cachedCostMatrices[room.name].matrix;
 }
 
 
 // Returns a cached cost matrix if one exists, otherwise generates one
 function getCostMatrix(roomName) {
-    if (cachedCostMatrices[roomName].tick === Game.time) {
-        return cachedCostMatrices[roomName];
+
+    console.log("getting cost matrix");
+
+    if (cachedCostMatrices[roomName] && 
+        cachedCostMatrices[roomName].tick === Game.time) {
+
+        console.log("returning cached matrix");
+        console.log(cachedCostMatrices[roomName]);
+
+        return cachedCostMatrices[roomName].matrix;
     }
-    return generateCostMatrix(Game.rooms[roomName]);
+
+    console.log("creating new matrix");
+
+    console.log(cachedCostMatrices[roomName]);
+
+    // console.log(generateCostMatrix(Game.rooms[roomName]).matrix);
+    return generateCostMatrix(Game.rooms[roomName]).matrix;
 }
 
 
@@ -175,14 +210,21 @@ function getCostMatrix(roomName) {
 // { path: DIRECTION constants, targetChosen: RoomPositon }
 function getSmartPath(start, goals) {
 
+    console.log("get");
+    goals = new RoomPosition(0, 9);
+
     // This will get us our path as a list of RoomPositions
     let path = PathFinder.search(start, goals, {
         // Default costs for walkable terrain
         plainCost: 2,
         swampCost: 10,
 
-        roomCallback: getCostMatrix(roomName)
+        roomCallback: getCostMatrix
     });
+
+    if (path.length == 0) {
+        return { path: null, target: null };
+    }
 
     // Convert our list of positions into directions, and store our initial direction
     let directions = [];

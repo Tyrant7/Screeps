@@ -164,7 +164,7 @@ class SpawnManager {
         }
 
         const minLife = Math.min(...lifeTimes.map(item => item.life));
-        const minSourceID = lifeTimes.find((lifeTime) => lifeTimes.life === minLife).sourceID;
+        const minSourceID = lifeTimes.find((lifeTime) => lifeTime.life === minLife).sourceID;
         return minSourceID;
     }
 }
