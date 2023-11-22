@@ -10,8 +10,8 @@ class TowerManager {
             return;
         }
         
-        for (let i in towers) {
-            towers[i].attack(hostiles[0]);
+        for (let tower of towers) {
+            tower.attack(hostiles[0]);
         }
     }
     
