@@ -21,9 +21,7 @@ class TowerManager {
             return;
         }
         
-        for (let i in towers) {
-            const tower = towers[i];
-
+        for (let tower of towers) {
             // Heal the lowest health structure. Walls max out at 1% health
             var targets = room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
@@ -38,7 +36,6 @@ class TowerManager {
 
             if (targets[0]) {
                 tower.repair(targets[0]);
-                return;
             }
         }
     }
