@@ -9,7 +9,7 @@ const roleRepairer = require("role.repairer");
 const roleMiner = require("role.miner");
 const roleReceiver = require("role.receiver");
 
-global.generateCostMatrix = require("extensions.smartPath");
+const regenerateCostMatrix = require("extensions.smartPath");
 
     /// Globals ///
 

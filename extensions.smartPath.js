@@ -3,14 +3,18 @@
 // { roomName [string]: PathFinder.CostMatrix }
 var cachedCostMatrices = {}
 
-ROOM_WIDTH = 50;
-ROOM_HEIGHT = 50;
+// Set of room names to regenerate the cost matrix for at the end of this tick
+var roomsToRegenerate = new Set();
 
-PLAIN_COST = 2;
-SWAMP_COST = 10;
-ROAD_COST = 1;
+// Regenerate our matrices every 100 ticks no matter what
+const MATRIX_REMAKE_INTERVAL = 100;
 
-IMMOVABLE = 255;
+const ROOM_WIDTH = 50;
+const ROOM_HEIGHT = 50;
+
+const ROAD_COST = 1;
+
+const IMMOVABLE = 255;
 
 const directions = {
     [RIGHT]: { x: 1, y: 0 },
@@ -23,18 +27,11 @@ const directions = {
     [TOP_RIGHT]: { x: 1, y: -1 }
 };
 
-// TODO
 // Generate cost matrix once per room; regenerate when one of the following occurs:
 // When a static creep moves
 // When a static creep dies
 // When a structure is built
 // When a structure is destroyed
-
-// Use regex to filter out relevant events from the getEventLog property of the room
-// -> build events where a construction site was placed or road was completed
-// -> destroy events for structure
-// -> death events for creeps where the creep was static
-// -> when a creep's status is set to static
 
 
 function invertDirection(direction) {
@@ -72,14 +69,12 @@ Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
     this.memory.smartPath = smartPath;
 }
 
-// Follows a generated smart path
+// Follows a previously generated smart path
 // Returns -1 if no smart path exists
 Creep.prototype.followSmartPath = function() {
     if (!this.memory.smartPath) {
         return -1;
     }
-
-    console.log("sadasda");
 
     // All creeps are active while moving
     this.setPathStatus(CONSTANTS.pathStatus.active);
@@ -104,6 +99,7 @@ Creep.prototype.followSmartPath = function() {
     }
 }
 
+// Follows an existing smartPath if one exists matching the target, otherwise generates one
 Creep.prototype.smartMoveTo = function(target) {
 
     if (!target) {
@@ -111,8 +107,13 @@ Creep.prototype.smartMoveTo = function(target) {
     }
 
     // Make sure this is the position of the target
-    if (target.pos) {
-        target = target.pos;
+    if (!(target instanceof RoomPosition)) {
+        if (target.pos) {
+            target = target.pos;
+        }
+        else {
+            return;
+        }
     }
 
     const smartPath = this.memory.smartPath;
@@ -126,7 +127,36 @@ Creep.prototype.smartMoveTo = function(target) {
 // Sets a path status for this creep, and flags regeneration of the cost matrix for its room
 // if this creep is or was static
 Creep.prototype.setPathStatus = function(pathStatus) {
+
+    // Creeps is static and about to die, we can regenerate this room's cost matrix
+    if (this.ticksToLive <= 1 &&
+        this.memory.pathStatus === CONSTANTS.pathStatus.static) {
+        roomsToRegenerate.add(this.room.name);
+    }
+
+    // Don't force regenerations if they don't need to happen
+    if (this.memory.pathStatus === pathStatus) {
+        return;
+    }
+
+    // Regenerate this matrix if this creep is going to/from a static path state
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.static ||
+        pathStatus === CONSTANTS.pathStatus.static) {
+            roomsToRegenerate.add(this.room.name);
+        } 
+
     this.memory.pathStatus = pathStatus;
+}
+
+// Thin wrapper around creating construction sites through code
+const createSite = RoomPosition.prototype.createConstructionSite;
+RoomPosition.prototype.createConstructionSite = function(structureType, name) {
+
+    // Log this room to be regenerated
+    roomsToRegenerate.add(this.roomName);
+
+    // Then do default site placement behaviour
+    return createSite.call(this, structureType, name);
 }
 
 
@@ -140,6 +170,49 @@ RoomPosition.prototype.getPosInDir = function(dir) {
 
     // TODO: Fix jank asf code here
     return new RoomPosition(x, y, x > 0 && y > 0 ? this.roomName : Game.map.describeExits(this.roomName)[dir] || this.roomName);
+}
+
+
+// First searches through all of our rooms and figures out which need to have changed structures
+// Then, for all rooms in roomsToRegenerate, regenerates cost matrices, then recalculates paths for all creeps
+function regenerateAppropriateRooms() {
+
+    // Figure out which rooms have changed
+    let i = -1;
+    for (let roomName in Game.rooms) {
+        // Force rooms to regenerate every so often, 
+        // but stagger regeneration of rooms so as not to regenerate all of them at once
+        i++;
+        if (Game.time % MATRIX_REMAKE_INTERVAL === i % MATRIX_REMAKE_INTERVAL) {
+            roomsToRegenerate.add(roomName);
+            continue;
+        }
+
+        // Get all rooms with my creeps or structures in them, and verify that they have the same number of structures as last tick
+        // No need to verify creep counts since static creeps will add rooms themselves when changing status
+        // Comparing only counts does come with the strange edge case of if a structure is destroyed at the same time as another is built,
+        // But this should sort itself out since we forcefully regenerate every so often
+        const structureCount = Game.rooms[roomName].find(FIND_STRUCTURES).length;
+        if (structureCount !== cachedCostMatrices[roomName].structureCount) {
+            roomsToRegenerate.add(roomName);
+        }
+    }
+
+    // Rooms
+    for (let roomName of roomsToRegenerate) {
+        const room = Game.rooms[roomName];
+
+        // First regenerate the cost matrix
+        generateCostMatrix(room);
+
+        // Then recalculate all paths
+        room.find(FIND_MY_CREEPS, { 
+            filter: (creep) => {
+                return creep.memory && creep.memory.smartPath && creep.memory.pathStatus === CONSTANTS.pathStatus.active;
+        }}).forEach((creep) => {
+            creep.getSmartPathToTarget(creep.smartPath.target);
+        });
+    }
 }
 
 
@@ -173,11 +246,7 @@ function generateCostMatrix(room) {
     }
 
     // Add this matrix to the cache
-    cachedCostMatrices[room.name] = { matrix: matrix, tick: Game.time };
-
-    console.log("Fire");
-    console.log(cachedCostMatrices[room.name]);
-
+    cachedCostMatrices[room.name] = { matrix: matrix, tick: Game.time, structureCount: structures.length };
     return cachedCostMatrices[room.name].matrix;
 }
 
@@ -237,4 +306,4 @@ function getSmartPath(start, goals) {
     return { path: directions, target: path.at(-1) };
 }
 
-module.exports = generateCostMatrix;
+module.exports = regenerateAppropriateRooms;
