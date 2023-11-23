@@ -59,7 +59,7 @@ var baseWorker = {
 
         // No containers, try our main storage
         const storage = creep.room.storage;
-        if (storage) {
+        if (storage && storage.store[RESOURCE_ENERGY] > 50) {
             if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 creep.moveTo(storage);
             }
