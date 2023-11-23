@@ -17,12 +17,12 @@ var roleMiner = {
         if (containers.length > 0 &&
             creep.pos.getRangeTo(containers[0].structure.pos) > 0) {
             // We should always be able to move to the first empty container, assuming no other miners are on this source
-            creep.moveTo(containers[0].structure);
+            creep.smartMoveTo(containers[0].structure);
         }
         else {
             // Basic mining
             if (creep.harvest(assignedSource) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(assignedSource, { visualizePathStyle: { stroke: "#11aabb" }});
+                creep.smartMoveTo(assignedSource);
             }
             else {
                 // We've hit our target; hunker down as static

@@ -1,4 +1,5 @@
 global.config = {
+    showRoomVisuals: true,
     debug: true
 }
 
@@ -9,7 +10,7 @@ const roleRepairer = require("role.repairer");
 const roleMiner = require("role.miner");
 const roleReceiver = require("role.receiver");
 
-const regenerateCostMatrix = require("extensions.smartPath");
+const regenerateAppropriateRooms = require("extensions.smartPath");
 
     /// Globals ///
 
@@ -102,6 +103,11 @@ module.exports.loop = function() {
             reevaluateWorker(creep, myBase);
         }
     }
+
+        /// Pathing ///
+
+    // At the end of every tick, regenerate appropriate smart paths
+    regenerateAppropriateRooms();
 }
 
 function reevaluateWorker(creep, room) {

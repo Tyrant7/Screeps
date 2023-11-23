@@ -61,7 +61,7 @@ class SpawnManager {
         }
 
         // Debug overlay for worker/miner needs in this room
-        if (config.debug) {
+        if (config.showRoomVisuals) {
             const visual = new RoomVisual(mySpawn.room.name);
             let c = 0;
             for (const i in WorkerManager.ROLES) {
@@ -142,7 +142,8 @@ class SpawnManager {
     findUnusedSourceID(room) {
         const sources = room.find(FIND_SOURCES);
 
-        let lifeTimes = [];
+        let lowestLife = CREEP_LIFE_TIME + 1;
+        let lowestLifeSourceID = null;
         for (let source of sources) {
 
             // Find all miners on this source
@@ -155,17 +156,17 @@ class SpawnManager {
 
             // Get the highest time to live for this source
             const maxLife = sourceMiners.reduce((prev, curr) => prev.ticksToLive > curr.ticksToLive ? prev : curr);
-            lifeTimes.push({ sourceID: source.id, life: maxLife });
+            if (maxLife < lowestLife) {
+                lowestLife = maxLife;
+                lowestLifeSourceID = source.id;
+            }
         }
 
-        if (lifeTimes.length == 0) {
+        if (!lowestLifeSourceID) {
             console.log("Source requested but no sources found.");
             return "";
         }
-
-        const minLife = Math.min(...lifeTimes.map(item => item.life));
-        const minSourceID = lifeTimes.find((lifeTime) => lifeTime.life === minLife).sourceID;
-        return minSourceID;
+        return lowestLifeSourceID;
     }
 }
 

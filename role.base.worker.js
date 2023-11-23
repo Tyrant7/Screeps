@@ -23,7 +23,7 @@ var baseWorker = {
             }});
             if (nearContainer) {
                 if (creep.withdraw(nearContainer, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearContainer, { visualizePathStyle: {stroke: "ffaa00"}});
+                    creep.smartMoveTo(nearContainer);
                 }
                 return true;
             }
@@ -35,7 +35,7 @@ var baseWorker = {
             const droppedLoot = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: RESOURCE_ENERGY });
             if (droppedLoot) {
                 if (creep.pickup(droppedLoot, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(droppedLoot, {visualizePathStyle: {stroke: "#ffaa00"}});
+                    creep.smartMoveTo(droppedLoot);
                 }
                 return;
             }
@@ -46,7 +46,7 @@ var baseWorker = {
                     return s.store[RESOURCE_ENERGY] > 50;
             }});
             if (creep.withdraw(tombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(tombstone, { visualizePathStyle: {stroke: "ffaa00"}});
+                creep.smartMoveTo();
             }
         }
         
@@ -59,15 +59,15 @@ var baseWorker = {
         const storage = creep.room.storage;
         if (storage) {
             if (creep.withdraw(storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(storage, { visualizePathStyle: {stroke: "ffaa00"}});
+                creep.smartMoveTo(storage);
             }
             return;
         }
         
         // We must not have any miners yet. Mine resources for ourself
-        var nearSource = creep.pos.findClosestByPath(FIND_SOURCES);
+        const nearSource = creep.pos.findClosestByPath(FIND_SOURCES);
         if (creep.harvest(nearSource) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(nearSource, { visualizePathStyle: {stroke: "#11aabb"}});
+            creep.smartMoveTo(nearSource);
         }
     },
 
@@ -77,7 +77,7 @@ var baseWorker = {
         });
         if (target) {
             if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target, {visualizePathStyle: {stroke: "#ffffff"}});
+                creep.smartMoveTo(target);
             }
             return true;
         }
