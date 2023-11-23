@@ -64,10 +64,8 @@ function getPosition(target) {
 Creep.prototype.requestShove = function (target) {
 
     // If we already have a smart path, follow it
-    if (this.memory.pathStatus === CONSTANTS.pathStatus.active &&
-        this.memory.smartPath && 
-        this.memory.smartPath.path && this.memory.smartPath.path.length > 0) {
-        this.move(this.memory.smartPath.path[0]);
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.active) {
+        this.followSmartPath(target);
         return;
     }
 
@@ -99,27 +97,38 @@ Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
 
 // Follows a previously generated smart path
 // Returns -1 if no smart path exists
-Creep.prototype.followSmartPath = function() {
+// disallowMovePos -> a position we shouldn't move to
+Creep.prototype.followSmartPath = function(disallowMovePos = null) {
 
     const smartPath = this.memory.smartPath;
     if (!smartPath || !smartPath.path || 
         smartPath.path.length === 0) {
+        if (this.memory.pathStatus === CONSTANTS.pathStatus.active) {
+            this.setPathStatus(CONSTANTS.pathStatus.passive);
+        }
         return;
     }
 
     // All creeps are active while moving
     this.setPathStatus(CONSTANTS.pathStatus.active);
   
+    // Only progress the path if we've moved last tick, otherwise we'll try the same step again
+    if (this.pos !== smartPath.lastPosition) {
+        smartPath.path.shift();
+        smartPath.lastPosition = this.pos;
+    }
+
     const nextStep = smartPath.path[0];
     if (this.move(nextStep) === OK) {
-        // Swap with any blockers, as long as they aren't static
-        const blocker = this.pos.getPosInDir(nextStep).lookFor(LOOK_CREEPS)[0];
-        if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
-            blocker.requestShove(this.pos);
-        }
 
-        // Progress path
-        smartPath.path.shift();
+        // Swap with any blockers, as long as they aren't static or excluded
+        const nextPos = this.pos.getPosInDir(nextStep);
+        if (disallowMovePos != null && nextPos !== disallowMovePos) {
+            const blocker = nextPos.lookFor(LOOK_CREEPS)[0];
+            if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
+                blocker.requestShove(this.pos);
+            }
+        }
 
         // If we have no more items left in our path, we are now passive, unless already static
         if (smartPath.path.length === 0 &&
@@ -141,11 +150,12 @@ Creep.prototype.smartMoveTo = function(target) {
 
     // Verfiy the smart path
     const smartPath = this.memory.smartPath;
-    if (!smartPath || !smartPath.path || !smartPath.path.length || 
+    if (!smartPath || !smartPath.path || smartPath.path.length === 0 || 
         !smartPath.target || smartPath.target.roomName != target.roomName ||
-        !target.inRangeTo(smartPath.target.x, smartPath.target.y, 1)) {
-
-        this.getSmartPathToTarget(target);
+        !target.inRangeTo(smartPath.target.x, smartPath.target.y, 0)) {
+        // Our new path should lead us exactly where we were going before, not within 1 range
+        // With range of 1 it would recede our path by one tile each research
+        this.getSmartPathToTarget(target, 0);
     }
     this.followSmartPath();
 }
@@ -339,7 +349,7 @@ function getSmartPath(start, goals) {
         directions.push(path[i].getDirectionTo(path[i + 1]));
     }
 
-    return { path: directions, target: path[path.length - 2] };
+    return { path: directions, target: path[path.length - 2], lastPosition: start };
 }
 
 module.exports = regenerateAppropriateRooms;
