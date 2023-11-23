@@ -60,9 +60,17 @@ function getPosition(target) {
 }
 
 
+// Requests a swap between this creep and target, relaculates the path of this creep afterwards to avoid offsetting the path
 Creep.prototype.requestSwap = function (target) {
     const swapDir = this.pos.getDirectionTo(target);
     this.move(swapDir);
+
+    // If this creep had a path, we can relalculate it to avoid the swap offsetting our creep's path
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.active && 
+        this.memory.smartPath && this.memory.smartPath.target) {
+        const t = this.memory.smartPath.target;
+        this.getSmartPathToTarget(new RoomPosition(t.x, t.y, t.roomName));
+    }
 }
 
 // Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
@@ -101,7 +109,6 @@ Creep.prototype.followSmartPath = function() {
   
     const isArray = Array.isArray(smartPath.path);
     const nextStep = isArray ? smartPath.path[0] : smartPath.path;
-    
     if (this.move(nextStep) === OK) {
         if (isArray) {
             smartPath.path.shift();
@@ -109,7 +116,7 @@ Creep.prototype.followSmartPath = function() {
 
         // Swap with any blockers, as long as they aren't static
         const blocker = this.pos.getPosInDir(nextStep).lookFor(LOOK_CREEPS)[0];
-        if (blocker && blocker.memory && blocker.memory.pathStatus === CONSTANTS.pathStatus.passive) {
+        if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
             blocker.requestSwap(nextStep);
         }
 
