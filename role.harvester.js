@@ -38,7 +38,7 @@ var roleHarvester = {
             // Finally, replenish storages
             const storage = creep.room.storage;
             if (storage) {
-                if (creep.transfer(storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                if (creep.transfer(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.smartMoveTo(storage);
                 }
                 return false;

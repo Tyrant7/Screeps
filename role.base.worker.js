@@ -22,7 +22,7 @@ var baseWorker = {
                            s.store[RESOURCE_ENERGY] > 50);
             }});
             if (nearContainer) {
-                if (creep.withdraw(nearContainer, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                if (creep.withdraw(nearContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.smartMoveTo(nearContainer);
                 }
                 return true;
@@ -45,7 +45,7 @@ var baseWorker = {
                 filter: function(s) {
                     return s.store[RESOURCE_ENERGY] > 50;
             }});
-            if (creep.withdraw(tombstone, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            if (creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 creep.smartMoveTo();
             }
         }
@@ -58,7 +58,7 @@ var baseWorker = {
         // No containers, try our main storage
         const storage = creep.room.storage;
         if (storage) {
-            if (creep.withdraw(storage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 creep.smartMoveTo(storage);
             }
             return;
@@ -66,7 +66,7 @@ var baseWorker = {
         
         // We must not have any miners yet. Mine resources for ourself
         const nearSource = creep.pos.findClosestByPath(FIND_SOURCES);
-        if (creep.harvest(nearSource) == ERR_NOT_IN_RANGE) {
+        if (creep.harvest(nearSource) === ERR_NOT_IN_RANGE) {
             creep.smartMoveTo(nearSource);
         }
     },
@@ -76,7 +76,7 @@ var baseWorker = {
             filter: customFilter
         });
         if (target) {
-            if (creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 creep.smartMoveTo(target);
             }
             return true;

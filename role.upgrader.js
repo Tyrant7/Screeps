@@ -12,13 +12,13 @@ var roleUpgrader = {
         }
         else {
             if (creep.room.controller.sign.text !== CONSTANTS.signText) {
-                if (creep.signController(creep.room.controller, CONSTANTS.signText) == ERR_NOT_IN_RANGE) {
+                if (creep.signController(creep.room.controller, CONSTANTS.signText) === ERR_NOT_IN_RANGE) {
                     creep.smartMoveTo(creep.room.controller);
                 }
                 return false;
             }
             
-            if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
+            if (creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
                 creep.smartMoveTo(creep.room.controller);
             }
         }

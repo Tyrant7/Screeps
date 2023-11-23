@@ -20,7 +20,7 @@ var roleBuilder = {
                 return site.structureType === STRUCTURE_SPAWN;
             }});
             if (target) {
-                if (creep.build(target) == ERR_NOT_IN_RANGE) {
+                if (creep.build(target) === ERR_NOT_IN_RANGE) {
                     creep.smartMoveTo(target);
                 }
             }

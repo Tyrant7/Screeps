@@ -21,7 +21,7 @@ var roleMiner = {
         }
         else {
             // Basic mining
-            if (creep.harvest(assignedSource) == ERR_NOT_IN_RANGE) {
+            if (creep.harvest(assignedSource) === ERR_NOT_IN_RANGE) {
                 creep.smartMoveTo(assignedSource);
             }
             else {
