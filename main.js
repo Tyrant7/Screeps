@@ -82,6 +82,13 @@ module.exports.loop = function() {
         if (creep.memory.role in creepRoleMap) {
             
             let finishedTask = false;
+
+
+            // Put commented code back after and delete this line once debugging is done
+            finishedTask = creepRoleMap[creep.memory.role].run(creep);
+
+            /*
+
             try {
                 // Run the corresponding behaviour for this creep's role
                 finishedTask = creepRoleMap[creep.memory.role].run(creep);
@@ -91,6 +98,7 @@ module.exports.loop = function() {
                 console.log("[" + error + "] occured when running task: " + creep.memory.role + ". Defaulting to harvester behaviour.");
                 finishedTask = creepRoleMap["harvester"].run(creep);
             }
+            */
             
             // Only reassign worker creeps, for obvious reasons
             // Force workers to reevaluate task every so often so all workers don't devolve into upgraders after completing their tasks
@@ -107,7 +115,7 @@ module.exports.loop = function() {
         /// Pathing ///
 
     // At the end of every tick, regenerate appropriate smart paths
-    // regenerateAppropriateRooms();
+    regenerateAppropriateRooms();
 }
 
 function reevaluateWorker(creep, room) {

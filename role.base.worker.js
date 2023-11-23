@@ -23,7 +23,7 @@ var baseWorker = {
             }});
             if (nearContainer) {
                 if (creep.withdraw(nearContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearContainer);
+                    creep.smartMoveTo(nearContainer);
                 }
                 return true;
             }
@@ -35,7 +35,7 @@ var baseWorker = {
             const droppedLoot = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: RESOURCE_ENERGY });
             if (droppedLoot) {
                 if (creep.pickup(droppedLoot, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(droppedLoot);
+                    creep.smartMoveTo(droppedLoot);
                 }
                 return;
             }
@@ -47,7 +47,7 @@ var baseWorker = {
             }});
             if (tombstone) {
                 if (creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(tombstone);
+                    creep.smartMoveTo(tombstone);
                 return;
             }}
         }
@@ -61,7 +61,7 @@ var baseWorker = {
         const storage = creep.room.storage;
         if (storage && storage.store[RESOURCE_ENERGY] > 50) {
             if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(storage);
+                creep.smartMoveTo(storage);
             }
             return;
         }
@@ -69,7 +69,7 @@ var baseWorker = {
         // We must not have any miners yet. Mine resources for ourself
         const nearSource = creep.pos.findClosestByPath(FIND_SOURCES);
         if (creep.harvest(nearSource) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(nearSource);
+            creep.smartMoveTo(nearSource);
         }
     },
 
@@ -79,7 +79,7 @@ var baseWorker = {
         });
         if (target) {
             if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
+                creep.smartMoveTo(target);
             }
             return true;
         }

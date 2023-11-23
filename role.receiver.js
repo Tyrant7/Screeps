@@ -23,7 +23,7 @@ var roleReceiver = {
 
         // Move to supply drop
         const supplyDrop = drops[0];
-        creep.moveTo(supplyDrop.pos);
+        creep.smartMoveTo(supplyDrop.pos);
     }
 }
 

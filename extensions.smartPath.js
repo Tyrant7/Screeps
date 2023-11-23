@@ -60,17 +60,20 @@ function getPosition(target) {
 }
 
 
-// Requests a swap between this creep and target, relaculates the path of this creep afterwards to avoid offsetting the path
-Creep.prototype.requestSwap = function (target) {
+// Requests this creep to move out of the way of another
+Creep.prototype.requestShove = function (target) {
+
+    // If we already have a smart path, follow it
+    if (this.memory.pathStatus === CONSTANTS.pathStatus.active &&
+        this.memory.smartPath && 
+        this.memory.smartPath.path && this.memory.smartPath.path.length > 0) {
+        this.move(this.memory.smartPath.path[0]);
+        return;
+    }
+
+    // Otherwise, simply swap with the creep requesting the swap
     const swapDir = this.pos.getDirectionTo(target);
     this.move(swapDir);
-
-    // If this creep had a path, we can relalculate it to avoid the swap offsetting our creep's path
-    if (this.memory.pathStatus === CONSTANTS.pathStatus.active && 
-        this.memory.smartPath && this.memory.smartPath.target) {
-        const t = this.memory.smartPath.target;
-        this.getSmartPathToTarget(new RoomPosition(t.x, t.y, t.roomName));
-    }
 }
 
 // Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
@@ -91,7 +94,7 @@ Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
         return;
     }
     target = getPosition(target);
-    this.memory.smartPath = getSmartPath(this.pos, { pos: target, range: range });
+    this.memory.smartPath = getSmartPath(this.pos, [{ pos: target, range: range }]);
 }
 
 // Follows a previously generated smart path
@@ -101,27 +104,25 @@ Creep.prototype.followSmartPath = function() {
     const smartPath = this.memory.smartPath;
     if (!smartPath || !smartPath.path || 
         smartPath.path.length === 0) {
-        return -1;
+        return;
     }
 
     // All creeps are active while moving
     this.setPathStatus(CONSTANTS.pathStatus.active);
   
-    const isArray = Array.isArray(smartPath.path);
-    const nextStep = isArray ? smartPath.path[0] : smartPath.path;
+    const nextStep = smartPath.path[0];
     if (this.move(nextStep) === OK) {
-        if (isArray) {
-            smartPath.path.shift();
-        }
-
         // Swap with any blockers, as long as they aren't static
         const blocker = this.pos.getPosInDir(nextStep).lookFor(LOOK_CREEPS)[0];
         if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
-            blocker.requestSwap(nextStep);
+            blocker.requestShove(this.pos);
         }
 
+        // Progress path
+        smartPath.path.shift();
+
         // If we have no more items left in our path, we are now passive, unless already static
-        if (!isArray &&
+        if (smartPath.path.length === 0 &&
             smartPath.pathStatus === CONSTANTS.pathStatus.active) {
             this.setPathStatus(CONSTANTS.pathStatus.passive);
         }
@@ -140,8 +141,10 @@ Creep.prototype.smartMoveTo = function(target) {
 
     // Verfiy the smart path
     const smartPath = this.memory.smartPath;
-    if (!smartPath || !smartPath.path || !smartPath.path.length || !smartPath.target ||
+    if (!smartPath || !smartPath.path || !smartPath.path.length || 
+        !smartPath.target || smartPath.target.roomName != target.roomName ||
         !target.inRangeTo(smartPath.target.x, smartPath.target.y, 1)) {
+
         this.getSmartPathToTarget(target);
     }
     this.followSmartPath();
@@ -229,25 +232,8 @@ function regenerateAppropriateRooms() {
 
     // Rooms
     for (let roomName of roomsToRegenerate) {
-        const room = Game.rooms[roomName];
-
-        // First regenerate the cost matrix
-        generateCostMatrix(room);
-
-        // Then recalculate all paths
-        room.find(FIND_MY_CREEPS, { 
-            filter: (creep) => {
-                return creep.memory && creep.memory.smartPath && creep.memory.smartPath.target &&
-                        creep.memory.pathStatus === CONSTANTS.pathStatus.active;
-        }}).forEach((creep) => {
-            creep.getSmartPathToTarget(creep.memory.smartPath.target);
-        });
-
-        
-        // DEBUG
-        if (config.debug) {
-            console.log("Regenerating cost matrix for: " + room.name);
-        }
+        // Regenerate this cost matrix for this room, which will also handle recalculate creep paths
+        generateCostMatrix(Game.rooms[roomName]);
     }
     roomsToRegenerate.clear();
 }
@@ -255,6 +241,11 @@ function regenerateAppropriateRooms() {
 
 // Generates a new cost matrix for the specified room and caches it
 function generateCostMatrix(room) {
+
+    // DEBUG
+    if (config.debug) {
+        console.log("Regenerating cost matrix for: " + room.name);
+    }
 
     // Clear the existing cached matrix for this room, if one exists
     if (cachedCostMatrices[room.name]) {
@@ -268,8 +259,8 @@ function generateCostMatrix(room) {
         if (structure.structureType === STRUCTURE_ROAD) {
             matrix.set(structure.pos.x, structure.pos.y, ROAD_COST)
         }
-        else if (structure.structureType !== STRUCTURE_RAMPART &&
-            structure.structureType !== STRUCTURE_CONTAINER) {
+        else if ((structure.structureType !== STRUCTURE_RAMPART || !structure.my) &&
+                 structure.structureType !== STRUCTURE_CONTAINER) {
             matrix.set(structure.pos.x, structure.pos.y, IMMOVABLE);
         }
     }
@@ -284,6 +275,20 @@ function generateCostMatrix(room) {
 
     // Add this matrix to the cache
     cachedCostMatrices[room.name] = { matrix: matrix, structureCount: structures.length };
+
+    // Finally, recalculate all paths for creeps with existing paths
+    // This will call getSmartPath, which will check to generate a new matrix, but take the cached one above
+    // instead of calling this method again to generate a new one
+    // -> A single if statement in a confusing mass of recursiveness holds this infinite loop back
+    creeps.filter((creep) => {
+        return creep.memory && creep.memory.smartPath && creep.memory.smartPath.target &&
+                creep.memory.pathStatus === CONSTANTS.pathStatus.active;
+    }).forEach((creep) => {
+        // Target type gets stripped when committing to memory
+        const p = creep.memory.smartPath.target;
+        creep.getSmartPathToTarget(new RoomPosition(p.x, p.y, p.roomName));
+    });
+
     return cachedCostMatrices[room.name].matrix;
 }
 
@@ -294,8 +299,9 @@ function getCostMatrix(roomName) {
         return cachedCostMatrices[roomName].matrix;
     }
 
+    // Nothing in this room
     if (!Game.rooms[roomName]) {
-        return;
+        return new PathFinder.CostMatrix();
     }
 
     return generateCostMatrix(Game.rooms[roomName]).matrix;
@@ -321,7 +327,7 @@ function getSmartPath(start, goals) {
         return { path: null, target: start };
     }
     else if (path.length === 1) {
-        return { path: start.getDirectionTo(path[0]), target: path[0] };
+        return { path: [start.getDirectionTo(path[0])], target: path[0] };
     }
 
     // Convert our list of positions into directions, and store our initial direction
