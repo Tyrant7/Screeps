@@ -21,7 +21,7 @@ var roleBuilder = {
             }});
             if (target) {
                 if (creep.build(target) === ERR_NOT_IN_RANGE) {
-                    creep.smartMoveTo(target);
+                    creep.moveTo(target);
                 }
             }
             else {

@@ -150,7 +150,7 @@ class SpawnManager {
             const sourceMiners = miners.filter((miner) => miner.memory.sourceID === source.id);
 
             // This source is free, we can return it
-            if (sourceMiners.length == 0) {
+            if (sourceMiners.length === 0) {
                 return source.id;
             }
 

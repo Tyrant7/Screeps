@@ -23,7 +23,7 @@ var baseWorker = {
             }});
             if (nearContainer) {
                 if (creep.withdraw(nearContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.smartMoveTo(nearContainer);
+                    creep.moveTo(nearContainer);
                 }
                 return true;
             }
@@ -35,7 +35,7 @@ var baseWorker = {
             const droppedLoot = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: RESOURCE_ENERGY });
             if (droppedLoot) {
                 if (creep.pickup(droppedLoot, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.smartMoveTo(droppedLoot);
+                    creep.moveTo(droppedLoot);
                 }
                 return;
             }
@@ -45,9 +45,11 @@ var baseWorker = {
                 filter: function(s) {
                     return s.store[RESOURCE_ENERGY] > 50;
             }});
-            if (creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.smartMoveTo();
-            }
+            if (tombstone) {
+                if (creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(tombstone);
+                return;
+            }}
         }
         
         // Then containers
@@ -59,7 +61,7 @@ var baseWorker = {
         const storage = creep.room.storage;
         if (storage) {
             if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.smartMoveTo(storage);
+                creep.moveTo(storage);
             }
             return;
         }
@@ -67,7 +69,7 @@ var baseWorker = {
         // We must not have any miners yet. Mine resources for ourself
         const nearSource = creep.pos.findClosestByPath(FIND_SOURCES);
         if (creep.harvest(nearSource) === ERR_NOT_IN_RANGE) {
-            creep.smartMoveTo(nearSource);
+            creep.moveTo(nearSource);
         }
     },
 
@@ -77,7 +79,7 @@ var baseWorker = {
         });
         if (target) {
             if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.smartMoveTo(target);
+                creep.moveTo(target);
             }
             return true;
         }

@@ -24,7 +24,7 @@ var roleRepairer = {
             const target = Game.getObjectById(creep.memory.targetID);
             if (target) {
                 if (creep.repair(target) === ERR_NOT_IN_RANGE) {
-                    creep.smartMoveTo(target);
+                    creep.moveTo(target);
                 }
                 
                 // Reset repair target; target has been sufficiently repaired

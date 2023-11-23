@@ -107,7 +107,7 @@ module.exports.loop = function() {
         /// Pathing ///
 
     // At the end of every tick, regenerate appropriate smart paths
-    regenerateAppropriateRooms();
+    // regenerateAppropriateRooms();
 }
 
 function reevaluateWorker(creep, room) {
