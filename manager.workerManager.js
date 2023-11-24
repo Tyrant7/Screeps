@@ -69,7 +69,7 @@ class WorkerManager {
 }
 
 function getMaxWorkers(room) {
-    return 10 - (room.controller.level / 3);
+    return 10 - Math.ceil((room.controller.level / 3));
 }
 
 WorkerManager.NO_ROLE = "none";
