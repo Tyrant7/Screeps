@@ -130,7 +130,7 @@ Creep.prototype.followSmartPath = function(disallowMovePos = null) {
             }
         }
 
-        // If we have no more items left in our path, we are now passive, unless already static
+        // If we've completed our path, we are now passive, unless already static
         if (smartPath.path.length === 0 &&
             smartPath.pathStatus === CONSTANTS.pathStatus.active) {
             this.setPathStatus(CONSTANTS.pathStatus.passive);
@@ -151,10 +151,10 @@ Creep.prototype.smartMoveTo = function(target) {
     // Verfiy the smart path
     const smartPath = this.memory.smartPath;
     if (!smartPath || !smartPath.path || smartPath.path.length === 0 || 
-        !smartPath.target || smartPath.target.roomName != target.roomName ||
-        !target.inRangeTo(smartPath.target.x, smartPath.target.y, 0)) {
-        // Our new path should lead us exactly where we were going before, not within 1 range
-        // With range of 1 it would recede our path by one tile each research
+        smartPath.target.roomName !== target.roomName ||
+        smartPath.target.y !== target.y || 
+        smartPath.target.x !== target.x) {
+        // Must give a range of 0 here to ensure that our path doesn't recede away from our original target as we research
         this.getSmartPathToTarget(target, 0);
     }
     this.followSmartPath();
@@ -334,10 +334,10 @@ function getSmartPath(start, goals) {
 
     const path = pathObject.path;
     if (path.length === 0) {
-        return { path: null, target: start };
+        return { path: null, target: start, lastPosition: start };
     }
     else if (path.length === 1) {
-        return { path: [start.getDirectionTo(path[0])], target: path[0] };
+        return { path: [start.getDirectionTo(path[0])], target: path[0], lastPosition: start };
     }
 
     // Convert our list of positions into directions, and store our initial direction
@@ -349,7 +349,7 @@ function getSmartPath(start, goals) {
         directions.push(path[i].getDirectionTo(path[i + 1]));
     }
 
-    return { path: directions, target: path[path.length - 2], lastPosition: start };
+    return { path: directions, target: path[path.length - 1], lastPosition: start };
 }
 
 module.exports = regenerateAppropriateRooms;
