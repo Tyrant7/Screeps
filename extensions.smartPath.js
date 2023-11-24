@@ -198,6 +198,11 @@ Creep.prototype.setPathStatus = function(pathStatus) {
     this.memory.pathStatus = pathStatus;
 }
 
+Creep.prototype.resetSmartPath = function() {
+    this.memory.smartPath = null;
+    this.setPathStatus(CONSTANTS.pathStatus.passive);
+}
+
 // Thin wrapper around creating construction sites through code
 const createSite = RoomPosition.prototype.createConstructionSite;
 RoomPosition.prototype.createConstructionSite = function(structureType, name) {

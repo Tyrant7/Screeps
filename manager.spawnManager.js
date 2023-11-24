@@ -157,7 +157,9 @@ class SpawnManager {
             }
 
             // Get the highest time to live for this source
-            const maxLife = sourceMiners.reduce((prev, curr) => prev.ticksToLive > curr.ticksToLive ? prev : curr);
+            const maxLife = sourceMiners.reduce((prev, curr) => prev.ticksToLive > curr.ticksToLive ? prev : curr).ticksToLive;
+
+            // Track the source with the lowest highest health miner
             if (maxLife < lowestLife) {
                 lowestLife = maxLife;
                 lowestLifeSourceID = source.id;
