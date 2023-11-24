@@ -67,17 +67,15 @@ Creep.prototype.requestShove = function (defaultDir) {
     const target = this.memory.smartPath && this.memory.smartPath.target ?
         this.memory.smartPath.target : null;
 
-    console.log("requesting a shove on: " + this.name);
-
-    // Thank you to Tisajokt for this genius little idea
+    // Thank you to Tisajokt for this brilliant little idea
     // Random picks a direction to rotate around its target, clockwise or counterclockwise
     // i=7 is straight away from the shover (i.e. defaultDir) and 0 and 6 are off to either side
     // i=3 is skipped until last, as that corresponds to a swap
     for (let i of Math.random() < 0.5 ? [6, 0, 5, 1, 4, 2, 7] : [0, 6, 1, 5, 2, 4, 7]) {
-        const dir = (defaultDir + i) % 8 + 1;
+        const dir = ((defaultDir + i) % 8) + 1;
         const newPos = this.pos.getPosInDir(dir);
         
-        // Only allow this creep to be shoved closer to its target
+        // Only allow this creep to be shoved closer to its target, if it has one
         const withinRange = !target || newPos.getRangeTo(target) <= this.pos.getRangeTo(target);
         if (withinRange && newPos.isWalkable()) {
             this.move(dir);
@@ -170,8 +168,7 @@ Creep.prototype.smartMoveTo = function(target) {
     const smartPath = this.memory.smartPath;
     if (!smartPath || !smartPath.path || smartPath.path.length === 0 || 
         smartPath.target.roomName !== target.roomName ||
-        smartPath.target.y !== target.y || 
-        smartPath.target.x !== target.x) {
+        !target.inRangeTo(smartPath.target.x, smartPath.target.y, 1)) {
         // Must give a range of 0 here to ensure that our path doesn't recede away from our original target as we research
         this.getSmartPathToTarget(target, 0);
     }
