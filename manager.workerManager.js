@@ -62,6 +62,14 @@ class WorkerManager {
         
         return workerNeeds[0].key;
     }
+
+    getMaxWorkers(room) {
+        return getMaxWorkers(room);
+    }
+}
+
+function getMaxWorkers(room) {
+    return 10 - (room.controller.level / 3);
 }
 
 WorkerManager.NO_ROLE = "none";
@@ -73,7 +81,7 @@ WorkerManager.ROLES = {
         
         // Allocate 1, plus an additional for every 500 free capacity
         // As well as an additional for each 2.5 creeps we'd need to hit our max
-        const bonus = Math.ceil((WorkerManager.MAX_WORKERS - workers.length) / 2.5);
+        const bonus = Math.ceil((getMaxWorkers(room) - workers.length) / 2.5);
         
         // Otherwise, allocate normally
         return 1 + bonus + Math.ceil(energyCapacity / 500);
@@ -96,8 +104,8 @@ WorkerManager.ROLES = {
         // Give a bonus of one repairman if we're within 4 of our max workers
         // Then an additional bonus if we're within 1 of our max workers
         const myWorkers = _.filter(Game.creeps, (creep) => creep.memory.worker && creep.my);
-        var bonus = myWorkers.length >= WorkerManager.MAX_WORKERS - 4 ? 1 : 0;
-        bonus += myWorkers.length >= WorkerManager.MAX_WORKERS - 1 ? 1 : 0;
+        var bonus = myWorkers.length >= getMaxWorkers(room) - 4 ? 1 : 0;
+        bonus += myWorkers.length >= getMaxWorkers(room) - 1 ? 1 : 0;
         
         // Allocate 1 always, plus bonuses based on worker counts
         return 1 + bonus;
@@ -105,7 +113,7 @@ WorkerManager.ROLES = {
     "upgrader": function(room) {
         
         // Don't allocate too many upgraders if we don't have many others workers
-        if (workers.length < Math.ceil(WorkerManager.MAX_WORKERS * WorkerManager.UPGRADE_THRESHOLD)) {
+        if (workers.length < Math.ceil(getMaxWorkers(room) * WorkerManager.UPGRADE_THRESHOLD)) {
             return 1;
         }
         
@@ -119,11 +127,10 @@ WorkerManager.ROLES = {
         }
         
         // Any remaining jobs go to upgraders
-        return Math.max(1, 1 + WorkerManager.MAX_WORKERS - total);
+        return Math.max(1, 1 + getMaxWorkers(room) - total);
     },
 };
 
 WorkerManager.UPGRADE_THRESHOLD = 0.7;
-WorkerManager.MAX_WORKERS = 11;
 
 module.exports = WorkerManager;

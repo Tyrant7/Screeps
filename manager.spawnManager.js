@@ -8,8 +8,10 @@ const archetypes = {
         let body = workerParts;
         let lvl = 1;
         const levelCost = getCreepCost(body);
+        const maxLevel = room.controller.level + (room.controller.level / 4);
+
         // If we've been wiped out, cap our worker level and number of workers to ensure we can spawn one
-        while (lvl < room.controller.level && lvl < workers.length && (lvl + 1) * levelCost <= room.energyCapacityAvailable) {
+        while (lvl < maxLevel && lvl < workers.length && (lvl + 1) * levelCost <= room.energyCapacityAvailable) {
             lvl++;
             body = body.concat(workerParts);
         }
@@ -56,7 +58,7 @@ class SpawnManager {
             this.spawnVisuals(mySpawn);
         }
         else {
-            this.doSpawns(mySpawn, { workers: WorkerManager.MAX_WORKERS,
+            this.doSpawns(mySpawn, { workers: workerManager.getMaxWorkers(mySpawn.room),
                                      miners: maxMiners });
         }
 
