@@ -23,6 +23,10 @@ var roleBuilder = {
                 if (creep.build(target) === ERR_NOT_IN_RANGE) {
                     creep.smartMoveTo(target);
                 }
+                else {
+                    // Bandaid fix for now. Will need to find a better way to do this later
+                    creep.setPathStatus(CONSTANTS.pathStatus.passive);
+                }
             }
             else {
                 // Completed our task

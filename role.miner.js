@@ -6,6 +6,9 @@ var roleMiner = {
         
         // Retrieve our assigned source
         const assignedSource = Game.getObjectById(creep.memory.sourceID);
+        if (!assignedSource) {
+            return;
+        }
 
         // If we're there, we can look for containers next to our source to stand on
         const p = assignedSource.pos;

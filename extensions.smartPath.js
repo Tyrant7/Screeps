@@ -61,17 +61,29 @@ function getPosition(target) {
 
 
 // Requests this creep to move out of the way of another
-Creep.prototype.requestShove = function (target) {
+Creep.prototype.requestShove = function (defaultDir) {
 
-    // If we already have a smart path, follow it
-    if (this.memory.pathStatus === CONSTANTS.pathStatus.active) {
-        this.followSmartPath(target);
-        return;
+    // Get this creep's target, if any
+    const target = this.memory.smartPath && this.memory.smartPath.target ?
+        this.memory.smartPath.target : null;
+
+    // Thank you to Tisajokt for this genius little idea
+    // Random picks a direction to rotate around its target, clockwise or counterclockwise
+    // i=7 is straight away from the shover (i.e. defaultDir) and 0 and 6 are off to either side
+    // i=3 is skipped until last, as that corresponds to a swap
+    for (let i of Math.random() < 0.5 ? [6, 0, 5, 1, 4, 2, 7] : [0, 6, 1, 5, 2, 4, 7]) {
+        const dir = (defaultDir + i) % 8 + 1;
+        const newPos = this.pos.getPosInDir(dir);
+        
+        // Only allow this creep to be shoved closer to its target
+        const withinRange = !target || newPos.getRangeTo(target) <= this.pos.getRangeTo(target);
+        if (withinRange && newPos.isWalkable()) {
+            this.move(dir);
+        }
     }
 
-    // Otherwise, simply swap with the creep requesting the swap
-    const swapDir = this.pos.getDirectionTo(target);
-    this.move(swapDir);
+    // Otherwise, simply swap with the creep requesting the swap;
+    this.move((defaultDir + 3) % 8 + 1);
 }
 
 // Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
@@ -96,9 +108,9 @@ Creep.prototype.getSmartPathToTarget = function(target, range = 1) {
 }
 
 // Follows a previously generated smart path
-// Returns -1 if no smart path exists
+// Returns if no smart path exists
 // disallowMovePos -> a position we shouldn't move to
-Creep.prototype.followSmartPath = function(disallowMovePos = null) {
+Creep.prototype.followSmartPath = function() {
 
     const smartPath = this.memory.smartPath;
     if (!smartPath || !smartPath.path || 
@@ -116,24 +128,27 @@ Creep.prototype.followSmartPath = function(disallowMovePos = null) {
     if (this.pos !== smartPath.lastPosition) {
         smartPath.path.shift();
         smartPath.lastPosition = this.pos;
-    }
-
-    const nextStep = smartPath.path[0];
-    if (this.move(nextStep) === OK) {
-
-        // Swap with any blockers, as long as they aren't static or excluded
-        const nextPos = this.pos.getPosInDir(nextStep);
-        if (disallowMovePos != null && nextPos !== disallowMovePos) {
-            const blocker = nextPos.lookFor(LOOK_CREEPS)[0];
-            if (blocker && blocker.memory && blocker.memory.pathStatus !== CONSTANTS.pathStatus.static) {
-                blocker.requestShove(this.pos);
-            }
-        }
 
         // If we've completed our path, we are now passive, unless already static
         if (smartPath.path.length === 0 &&
             smartPath.pathStatus === CONSTANTS.pathStatus.active) {
             this.setPathStatus(CONSTANTS.pathStatus.passive);
+        }
+    }
+
+    const nextStep = smartPath.path[0];
+    if (this.move(nextStep) === OK) {
+
+        // Don't attempt to look into a room we don't have access to
+        const blockerPos = this.pos.getPosInDir(nextStep);
+        if (Game.rooms[blockerPos.name] !== this.pos.roomName) {
+            return;
+        }
+
+        // Swap with any blockers, as long as they are passive (active will move next turn anyway)
+        const blocker = blockerPos.lookFor(LOOK_CREEPS)[0];
+        if (blocker && blocker.memory && blocker.memory.pathStatus === CONSTANTS.pathStatus.passive) {
+            blocker.requestShove(nextStep);
         }
     }
 }
@@ -195,7 +210,6 @@ RoomPosition.prototype.createConstructionSite = function(structureType, name) {
     return createSite.call(this, structureType, name);
 }
 
-
 // Gets a position in the specified direction of this room position
 // Wraps around to neighbouring rooms
 RoomPosition.prototype.getPosInDir = function(dir) {
@@ -204,7 +218,24 @@ RoomPosition.prototype.getPosInDir = function(dir) {
     let y = properModulus(this.y + directions[dir].y, ROOM_HEIGHT);
 
     // TODO: Fix jank asf code here
-    return new RoomPosition(x, y, x > 0 && y > 0 ? this.roomName : Game.map.describeExits(this.roomName)[dir] || this.roomName);
+    let roomName = x > 0 && y > 0 ? this.roomName : Game.map.describeExits(this.roomName)[dir] || this.roomName;
+    return new RoomPosition(x, y, roomName);
+}
+
+
+const isObstacle = _.transform(
+    OBSTACLE_OBJECT_TYPES,
+    (o, type) => { o[type] = true; },
+    {}
+);
+
+// Returns true if this RoomPosition is walkable
+RoomPosition.prototype.isWalkable = function() {
+    return _.every(this.look(), item => 
+        item.type === LOOK_TERRAIN ?
+        item.terrain !== "wall" :
+        !isObstacle[item.structureType]
+    );
 }
 
 
@@ -296,7 +327,7 @@ function generateCostMatrix(room) {
     }).forEach((creep) => {
         // Target type gets stripped when committing to memory
         const p = creep.memory.smartPath.target;
-        creep.getSmartPathToTarget(new RoomPosition(p.x, p.y, p.roomName));
+        creep.getSmartPathToTarget(new RoomPosition(p.x, p.y, p.roomName), 0);
     });
 
     return cachedCostMatrices[room.name].matrix;
