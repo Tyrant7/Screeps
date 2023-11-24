@@ -25,6 +25,7 @@ var roleBuilder = {
                 }
                 else {
                     // Bandaid fix for now. Will need to find a better way to do this later
+                    creep.memory.smartPath = { path: [], target: target.pos, lastPosition: creep.pos };
                     creep.setPathStatus(CONSTANTS.pathStatus.passive);
                 }
             }

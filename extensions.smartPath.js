@@ -67,6 +67,8 @@ Creep.prototype.requestShove = function (defaultDir) {
     const target = this.memory.smartPath && this.memory.smartPath.target ?
         this.memory.smartPath.target : null;
 
+    console.log("requesting a shove on: " + this.name);
+
     // Thank you to Tisajokt for this genius little idea
     // Random picks a direction to rotate around its target, clockwise or counterclockwise
     // i=7 is straight away from the shover (i.e. defaultDir) and 0 and 6 are off to either side
@@ -82,8 +84,8 @@ Creep.prototype.requestShove = function (defaultDir) {
         }
     }
 
-    // Otherwise, simply swap with the creep requesting the swap;
-    this.move((defaultDir + 3) % 8 + 1);
+    // Otherwise, simply swap with the creep requesting the shove
+    this.move(((defaultDir + 3) % 8) + 1);
 }
 
 // Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
@@ -133,6 +135,7 @@ Creep.prototype.followSmartPath = function() {
         if (smartPath.path.length === 0 &&
             smartPath.pathStatus === CONSTANTS.pathStatus.active) {
             this.setPathStatus(CONSTANTS.pathStatus.passive);
+            return;
         }
     }
 
@@ -141,7 +144,7 @@ Creep.prototype.followSmartPath = function() {
 
         // Don't attempt to look into a room we don't have access to
         const blockerPos = this.pos.getPosInDir(nextStep);
-        if (Game.rooms[blockerPos.name] !== this.pos.roomName) {
+        if (!Game.rooms[blockerPos.roomName]) {
             return;
         }
 
@@ -222,7 +225,7 @@ RoomPosition.prototype.getPosInDir = function(dir) {
     return new RoomPosition(x, y, roomName);
 }
 
-
+// We don't have to worry about making creeps false in this dictionary since they aren't indexed on
 const isObstacle = _.transform(
     OBSTACLE_OBJECT_TYPES,
     (o, type) => { o[type] = true; },
@@ -234,7 +237,9 @@ RoomPosition.prototype.isWalkable = function() {
     return _.every(this.look(), item => 
         item.type === LOOK_TERRAIN ?
         item.terrain !== "wall" :
-        !isObstacle[item.structureType]
+        item.type === LOOK_STRUCTURES ?
+        !isObstacle[item.structureType] :
+        true
     );
 }
 
