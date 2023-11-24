@@ -111,6 +111,8 @@ module.exports.loop = function() {
 }
 
 function reevaluateWorker(creep, room) {
+    // Reset this workers path to force a recalculation
+    creep.memory.smartPath = null;
     creep.memory.role = workerManager.requestRole(room);
 }
 

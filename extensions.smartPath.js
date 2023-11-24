@@ -169,8 +169,7 @@ Creep.prototype.smartMoveTo = function(target) {
     if (!smartPath || !smartPath.path || smartPath.path.length === 0 || 
         smartPath.target.roomName !== target.roomName ||
         !target.inRangeTo(smartPath.target.x, smartPath.target.y, 1)) {
-        // Must give a range of 0 here to ensure that our path doesn't recede away from our original target as we research
-        this.getSmartPathToTarget(target, 0);
+        this.getSmartPathToTarget(target);
     }
     this.followSmartPath();
 }
