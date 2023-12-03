@@ -100,15 +100,17 @@ WorkerManager.ROLES = {
         return Math.min(Math.ceil(totalCost / 7000), constructionSites.length);
     },
     "repairer": function(room) {
-                        
-        // Give a bonus of one repairman if we're within 4 of our max workers
-        // Then an additional bonus if we're within 1 of our max workers
-        const myWorkers = _.filter(Game.creeps, (creep) => creep.memory.worker && creep.my);
-        let bonus = myWorkers.length >= getMaxWorkers(room) - 4 ? 1 : 0;
-        bonus += myWorkers.length >= getMaxWorkers(room) - 1 ? 1 : 0;
+
+        // Total up the amount each structure sits below it's desired health
+        const totalDamage = room.find(FIND_STRUCTURES).reduce(function(total, structure) {
+            const multiplier = structure.structureType === STRUCTURE_WALL ? REPAIR_WALL_MULTIPLIER : 1;
+            const damage = Math.max((structure.hitsMax * REPAIR_TARGET_THRESHOLD * multiplier) - structure.hits, 0);
+            return total + damage;
+        }, 0);
         
-        // Allocate 1 always, plus bonuses based on worker counts
-        return 1 + bonus;
+        // Allocate based on damage -> for each 10_000 damage dealt to structures in this room
+        // No more than 3, and no more than worker count / 2
+        return Math.min(Math.min(totalDamage / 10000, 3), workers.lengths / 2);
     },
     "upgrader": function(room) {
         
