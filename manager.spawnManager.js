@@ -125,6 +125,7 @@ class SpawnManager {
             this.trySpawnCreep(mySpawn, archetypes.scout(mySpawn.room), {
                 role: "scout"
             });
+            console.log("creating a scout");
             return;
         }
 

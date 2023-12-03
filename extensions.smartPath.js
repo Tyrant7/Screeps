@@ -63,8 +63,6 @@ function getPosition(target) {
 // Requests this creep to move out of the way of another
 Creep.prototype.requestShove = function (defaultDir) {
 
-    console.log("requesting shove on " + this.name);
-
     // Get this creep's target, if any
     const target = this.memory.smartPath && this.memory.smartPath.target ?
         this.memory.smartPath.target : null;
@@ -151,7 +149,6 @@ Creep.prototype.followSmartPath = function() {
         // Swap with any blockers, as long as they are passive (active will move next turn anyway)
         const blocker = blockerPos.lookFor(LOOK_CREEPS)[0];
         if (blocker && blocker.memory && blocker.memory.pathStatus === CONSTANTS.pathStatus.passive) {
-            console.log("blocker");
             blocker.requestShove(nextStep);
         }
     }
