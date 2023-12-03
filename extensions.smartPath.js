@@ -63,6 +63,8 @@ function getPosition(target) {
 // Requests this creep to move out of the way of another
 Creep.prototype.requestShove = function (defaultDir) {
 
+    console.log("requesting shove on " + this.name);
+
     // Get this creep's target, if any
     const target = this.memory.smartPath && this.memory.smartPath.target ?
         this.memory.smartPath.target : null;
@@ -83,7 +85,7 @@ Creep.prototype.requestShove = function (defaultDir) {
     }
 
     // Otherwise, simply swap with the creep requesting the shove
-    this.move(((defaultDir + 3) % 8) + 1);
+    this.move((defaultDir + 3) % 8 + 1);
 }
 
 // Generates a smart path to the closest target in the room that fits the criteria and saves it to creep memory
@@ -149,6 +151,7 @@ Creep.prototype.followSmartPath = function() {
         // Swap with any blockers, as long as they are passive (active will move next turn anyway)
         const blocker = blockerPos.lookFor(LOOK_CREEPS)[0];
         if (blocker && blocker.memory && blocker.memory.pathStatus === CONSTANTS.pathStatus.passive) {
+            console.log("blocker");
             blocker.requestShove(nextStep);
         }
     }
@@ -169,7 +172,7 @@ Creep.prototype.smartMoveTo = function(target) {
     if (!smartPath || !smartPath.path || smartPath.path.length === 0 || 
         smartPath.target.roomName !== target.roomName ||
         !target.inRangeTo(smartPath.target.x, smartPath.target.y, 1)) {
-        this.getSmartPathToTarget(target);
+        this.getSmartPathToTarget(target, 0);
     }
     this.followSmartPath();
 }

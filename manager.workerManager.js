@@ -77,7 +77,7 @@ WorkerManager.NO_ROLE = "none";
 // { Name: idealCount() }
 WorkerManager.ROLES = {
     "harvester": function(room) {
-        let energyCapacity = room.energyCapacityAvailable - room.energyAvailable;
+        const energyCapacity = room.energyCapacityAvailable - room.energyAvailable;
         
         // Allocate 1, plus an additional for every 500 free capacity
         // As well as an additional for each 2.5 creeps we'd need to hit our max
@@ -88,9 +88,9 @@ WorkerManager.ROLES = {
     },
     "builder": function(room) {
                 
-        let constructionSites = room.find(FIND_CONSTRUCTION_SITES);
+        const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
         let totalCost = 0;
-        for (let i in constructionSites) {
+        for (const i in constructionSites) {
             totalCost += constructionSites[i].progressTotal;
         }
         
@@ -104,7 +104,7 @@ WorkerManager.ROLES = {
         // Give a bonus of one repairman if we're within 4 of our max workers
         // Then an additional bonus if we're within 1 of our max workers
         const myWorkers = _.filter(Game.creeps, (creep) => creep.memory.worker && creep.my);
-        var bonus = myWorkers.length >= getMaxWorkers(room) - 4 ? 1 : 0;
+        let bonus = myWorkers.length >= getMaxWorkers(room) - 4 ? 1 : 0;
         bonus += myWorkers.length >= getMaxWorkers(room) - 1 ? 1 : 0;
         
         // Allocate 1 always, plus bonuses based on worker counts

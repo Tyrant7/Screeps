@@ -8,7 +8,7 @@ const archetypes = {
         let body = workerParts;
         let lvl = 1;
         const levelCost = getCreepCost(body);
-        const maxLevel = room.controller.level + (room.controller.level / 4);
+        const maxLevel = room.controller.level + (room.controller.level / 5);
 
         // If we've been wiped out, cap our worker level and number of workers to ensure we can spawn one
         while (lvl < maxLevel && lvl < workers.length && (lvl + 1) * levelCost <= room.energyCapacityAvailable) {
@@ -30,10 +30,19 @@ const archetypes = {
         return { body: basic,
                  name: name + " [1]" };
     },
+    scout: function(room) {
+        return { body: [MOVE],
+                 name: "Scout" + Game.time };
+    }
 };
 
 // How many workers should exist before we start spawning miners
 const MINER_SPAWN_THRESHOLD = 7;
+
+// Our RCL should be at least this before we start making scouts
+const SCOUT_SPAWN_RCL = 4;
+const MAX_SCOUTS = 1;
+
 
 function getCreepCost(body) {
     return _.sum(body.map((part) => BODYPART_COST[part]));
@@ -59,7 +68,8 @@ class SpawnManager {
         }
         else {
             this.doSpawns(mySpawn, { workers: workerManager.getMaxWorkers(mySpawn.room),
-                                     miners: maxMiners });
+                                     miners: maxMiners,
+                                     scouts: MAX_SCOUTS });
         }
 
         // Debug overlay for worker/miner needs in this room
@@ -90,6 +100,9 @@ class SpawnManager {
         const predictedWorkerCount = this.getPredictedCreepCount(workers);
         const predictedMinerCount = this.getPredictedCreepCount(miners);
 
+        // No need for scouts since there's only one ever
+        const scoutCount = scouts.length;
+
         // Miners 
         // Since these are more expensive, they won't be spawned unless there is already a sufficient number of worker creeps
         // And we've hit an appropriate RCL level and began building extensions
@@ -102,6 +115,15 @@ class SpawnManager {
             this.trySpawnCreep(mySpawn, minerArch, { 
                 role: "miner",
                 sourceID: this.findUnusedSourceID(mySpawn.room)
+            });
+            return;
+        }
+
+        if (mySpawn.room.controller.level >= SCOUT_SPAWN_RCL &&
+            scoutCount < maximums.scounts && 
+            predictedWorkerCount >= maximums.workers - 2) {
+            this.trySpawnCreep(mySpawn, archetypes.scout(mySpawn.room), {
+                role: "scout"
             });
             return;
         }

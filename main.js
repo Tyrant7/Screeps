@@ -8,7 +8,7 @@ const roleBuilder = require("role.builder");
 const roleUpgrader = require("role.upgrader");
 const roleRepairer = require("role.repairer");
 const roleMiner = require("role.miner");
-const roleReceiver = require("role.receiver");
+const roleScout = require("role.scout");
 
 const regenerateAppropriateRooms = require("extensions.smartPath");
 
@@ -34,7 +34,7 @@ const creepRoleMap = {
     "upgrader": roleUpgrader,
     "repairer": roleRepairer,
     "miner": roleMiner,
-    "receiver": roleReceiver
+    "scout": roleScout,
 };
 
 module.exports.loop = function() {
@@ -67,7 +67,8 @@ module.exports.loop = function() {
     
     // Track creeps
     global.workers = _.filter(Game.creeps, (creep) => creep.memory.worker && creep.my);
-    global.miners = _.filter(Game.creeps, (creep) => creep.memory.role == "miner" && creep.my);
+    global.miners = _.filter(Game.creeps, (creep) => creep.memory.role === "miner" && creep.my);
+    global.scouts = _.filter(Game.creeps, (creep) => creep.memory.role === "scout" && creep.my);
 
     // Do creep spawns
     if (mySpawn) {
@@ -94,7 +95,7 @@ module.exports.loop = function() {
             
             // Only reassign worker creeps, for obvious reasons
             // Force workers to reevaluate task every so often so all workers don't devolve into upgraders after completing their tasks
-            if ((finishedTask || creep.ticksToLive % CONSTANTS.workerReevaluateInterval == 0) && creep.memory.worker) {
+            if ((finishedTask || creep.ticksToLive % CONSTANTS.workerReevaluateInterval === 0) && creep.memory.worker) {
                 reevaluateWorker(creep, myBase);
             }
         }

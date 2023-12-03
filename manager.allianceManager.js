@@ -24,10 +24,6 @@ class AllianceManager {
         }});
     }
 
-    findSupplyDrops(room) {
-        return this.findAlliedCreeps(room).filter((ally) => ally.saying === CONSTANTS.emotes.supplyDrop);
-    }
-
     // Open up the ramparts if nobody's around
     checkRamparts(room) {
         let ramparts = room.find(FIND_MY_STRUCTURES, { filter: (structure) => structure.structureType === STRUCTURE_RAMPART });

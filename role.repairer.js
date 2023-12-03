@@ -61,6 +61,10 @@ var roleRepairer = {
                 const multiplier = structure.structureType === STRUCTURE_WALL ? REPAIR_WALL_MULTIPLIER : 1;
                 return structure.hits < (structure.hitsMax * REPAIR_TARGET_THRESHOLD * multiplier);
             }
+
+            function roadFilter(structure) {
+                return thresholdFilter(structure) && structure.structureType === STRUCTURE_ROAD;
+            }
             
             // Filter CONTAINERS under the repair threshold
             function containerFilter(structure) {
@@ -77,11 +81,16 @@ var roleRepairer = {
                 return false;
             }
             
-            // If there weren't any important structures to repair, move on to neutral structures like walls and roads
+            // If there weren't any important structures to repair, move on to roads
+            if (repairStructures(FIND_STRUCTURES, roadFilter)) {
+                return false;
+            }
+
+            // Then finally walls
             if (repairStructures(FIND_STRUCTURES, thresholdFilter)) {
                 return false;
             }
-            
+
             // If there still weren't any structures, we can reassign roles
             return true;
         }
