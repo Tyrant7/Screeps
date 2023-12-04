@@ -110,7 +110,7 @@ WorkerManager.ROLES = {
         
         // Allocate based on damage -> for each 10_000 damage dealt to structures in this room
         // No more than 3, and no more than worker count / 2
-        return Math.min(Math.min(totalDamage / 10000, 3), workers.length / 2);
+        return Math.min(Math.ceil(totalDamage / 10000), 3, workers.length / 2);
     },
     "upgrader": function(room) {
         

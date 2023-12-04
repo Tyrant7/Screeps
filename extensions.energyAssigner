@@ -1,3 +1,54 @@
 
+// An object of reservation objects in the form of
+// {
+//     creepName [string]: {
+//         amount [number]
+//         containerID [string] -> a room object of where the energy is located
+//     }
+// }
+const reservations = {};
+
+// Searches for available energy in this creep's room
+// Starts by checking for reservations by this creep,
+// then creates a reservation if none exists
+// Also frees reservations associated with this creep if it is about to die
+Creep.prototype.findEnergy = function() {
+    const reservation = getReservation(this);
+    if (reservation) {
+        return reservation;
+    }
+
+    // TODO
+}
+
+// Finds all energy sources in this room and caches them for this tick
+// Includes the following:
+// - Dropped energy (if safe)
+// - Containers
+// - Tombstones (if safe)
+// - Ruins
+// - Storage
+// Returns the list of energy sources
+function searchEnergy(room) {
+
+}
+
+// Creates a reservation for under <creep>'s ID for <amount> energy in the same room
+// Returns the ID of the created reservation 
+// -> None if no energy was found
+function requestEnergy(creep, amount) {
+
+}
+
+// Releases any reservations made under <creep>'s ID
+function releaseEnergy(creep) {
+
+}
+
+// Returns the first reservation made under <creep>'s ID
+// -> None if no matches were found
+function getReservation(creep) {
+
+}
 
 // module.exports = EnergyAssigner;
